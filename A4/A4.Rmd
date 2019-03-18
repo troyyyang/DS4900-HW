@@ -1,0 +1,46 @@
+---
+title: Assign 4 - Trucks
+author:
+  - name: Troy Yang
+    email: alice@example.com
+    affiliation: Khoury
+abstract: |
+  This is my report for the truck factor assignment. 
+output: rticles::acm_article
+---
+
+```{r, echo=FALSE, warning=FALSE,message=FALSE}
+library(dplyr)
+library(rticles)
+df <-read.csv("wch_rsource_master_only.csv.gz")
+df %>%
+  select(author, author.timestamp, hash, file.path) %>%
+  rename(time = author.timestamp, file = file.path) -> df2
+```
+
+# Introduction
+
+This is where we say what we are about to do.
+
+The original data set has `r length(unique(df2$hash))` unique commmits made on `r length(unique(df2$file))` files by `r length(unique(df2$author))`
+
+# Methods
+
+This is where we say how we will do it.
+
+# Results
+
+This is where we say what we found.
+
+
+```{r,echo=FALSE, warning=FALSE,message=FALSE}
+github <-read.csv("wch_rsource_master_only.csv.gz")
+
+files <- unique(github$file.path)
+file_auth <- github %>% group_by(file.path, author) %>% summarise(Freq=n())
+file_auth
+truck_factor <- file_auth %>% group_by(file.path) %>% summarise(Freq=n())
+truck_factor
+nrow(truck_factor[truck_factor$Freq == 1,]) / nrow(truck_factor)
+```
+
