@@ -18,23 +18,23 @@ setwd("C:/Users/bingb/Desktop/DS4900-HW/A4")
 df <-read.csv("wch_rsource_master_only.csv.gz")
 df %>%
   select(committer, committer.timestamp, hash, file.path) %>%
-  rename(time = committer.timestamp, file = file.path) -> df2
+  rename(time = committer.timestamp, file = file.path) -> renamed
 
-df2 %>% 
-  filter( grepl(".scala$|\\.swift$|\\.js$|\\.cpp$|\\.h$|\\.java$|\\.c$|\\.php$|\\.groovy$|\\.sql$|\\.py$", file)) -> df3
+renamed %>% 
+  filter( grepl(".scala$|\\.swift$|\\.js$|\\.cpp$|\\.h$|\\.java$|\\.c$|\\.php$|\\.groovy$|\\.sql$|\\.py$", file)) -> clean
 
 
-files <- unique(df3$file)
+files <- unique(clean$file)
 
-df3 %>% 
+clean %>% 
   group_by(file, committer) %>% 
   summarise(DL=n()) -> file_by_committer
 
-df3 %>% 
+clean %>% 
   group_by(file) %>% 
   summarise(AC=n()) -> num_committer_by_file
 
-df3 %>%
+clean %>%
    group_by(file)  %>% 
    arrange(time, .by_group = TRUE) %>%
    summarize(first=first(committer)) -> first_committer
@@ -73,7 +73,7 @@ truck_factor = sum(doa$truck) + 1
 
 # Introduction
 
-The original data set has `r length(unique(df$hash))` unique commmits made on `r length(unique(df$file))` files by `r length(unique(df$committer))` committers. Upon removing files that are not relevant for this analysis, such as files that are not code, `r length(unique(df2$file))` files remain for analysis. Truck factor is determined by how many authors needs to be removed in order to have less than 50% of files be orphaned.
+The original data set has `r length(unique(df$hash))` unique commmits made on `r length(unique(df$file))` files by `r length(unique(df$committer))` committers. Upon removing files that are not relevant for this analysis, such as files that are not code, `r length(unique(clean$file))` files remain for analysis. Truck factor is determined by how many authors needs to be removed in order to have less than 50% of files be orphaned.
 
 # Methods
 
