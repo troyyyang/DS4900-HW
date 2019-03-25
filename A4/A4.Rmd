@@ -2,64 +2,98 @@
 title: Assign 4 - Trucks
 author:
   - name: Troy Yang
-    email: alice@example.com
+    email: yang.tr@husky.neu.edu
     affiliation: Khoury
 abstract: |
-  This is my report for the truck factor assignment. 
+  This is my report for the truck factor assignment. The truck factor is not an original idea, but rather this is an application of the truck factor analysis on the R project. This RMD file can do this same analysis for other projects, it just needs to be pointed at a different dataset.
 output: rticles::acm_article
 ---
 
 ```{r, echo=FALSE, warning=FALSE,message=FALSE}
 library(dplyr)
 library(rticles)
+library(readr)
+library(ggplot2)
+setwd("C:/Users/bingb/Desktop/DS4900-HW/A4")
 df <-read.csv("wch_rsource_master_only.csv.gz")
 df %>%
-  select(author, author.timestamp, hash, file.path) %>%
-  rename(time = author.timestamp, file = file.path) -> df2
+  select(committer, committer.timestamp, hash, file.path) %>%
+  rename(time = committer.timestamp, file = file.path) -> df2
+
+df2 %>% 
+  filter( grepl(".scala$|\\.swift$|\\.js$|\\.cpp$|\\.h$|\\.java$|\\.c$|\\.php$|\\.groovy$|\\.sql$|\\.py$", file)) -> df3
+
+
+files <- unique(df3$file)
+
+df3 %>% 
+  group_by(file, committer) %>% 
+  summarise(DL=n()) -> file_by_committer
+
+df3 %>% 
+  group_by(file) %>% 
+  summarise(AC=n()) -> num_committer_by_file
+
+df3 %>%
+   group_by(file)  %>% 
+   arrange(time, .by_group = TRUE) %>%
+   summarize(first=first(committer)) -> first_committer
+
+file_by_committer %>% 
+  inner_join(first_committer, by = "file") %>% 
+  inner_join(num_committer_by_file, by="file") %>%
+  mutate(FA = committer == first) -> doa
+
+doa %>%
+  mutate(truck = 3.293+(1.098*FA) + (0.164*DL) - (0.321*log(1+AC))) -> doa
+
+doa %>%
+  group_by(file) %>%
+  arrange(desc(truck), .by_group=T) %>%
+  summarize(first = first(committer)) -> doa
+
+num_files <- length(unique(doa$file))
+
+doa %>% 
+  group_by(first) %>%
+  summarize(n=n()) %>%
+  arrange(desc(n)) %>%
+  mutate(num_files = num_files) %>%
+  mutate(percent = n/num_files) -> doa
+
+cs <- cumsum(doa$percent)
+doa %>%
+  mutate(cs = cs) %>%
+  mutate(truck = cs < .5) -> doa
+
+truck_factor = sum(doa$truck) + 1
+
+
 ```
 
 # Introduction
 
-This is where we say what we are about to do.
-
-The original data set has `r length(unique(df2$hash))` unique commmits made on `r length(unique(df2$file))` files by `r length(unique(df2$author))`.
+The original data set has `r length(unique(df$hash))` unique commmits made on `r length(unique(df$file))` files by `r length(unique(df$committer))` committers. Upon removing files that are not relevant for this analysis, such as files that are not code, `r length(unique(df2$file))` files remain for analysis. Truck factor is determined by how many authors needs to be removed in order to have less than 50% of files be orphaned.
 
 # Methods
 
-This is where we say how we will do it.
+R and R Studio were used to perform this analysis. Packages such as dplyr and readr were used to help perform the analysis, while rticles and ggplot were used for the presentation/delivery of this analysis. This analysis used the same formula as the original authors to determine degree of ownership on files. The formula is as follows DOA = 3.293 + 1.098 * FA + 0.164 * DL - 0.321 * ln(1 + AC ) where FA is first authorship, DL is number of deliveries and AC is the number of accepted changes. Once I had calculated the needed parameters and could determine file ownership, I looked to see how many committers needed to be eliminated to have half the files be authorless.
+
 
 # Results
 
-This is where we say what we found.
+For this project, the truck factor was found to be `r truck_factor`. As the follow visualization will show, 'ripley' had an overwhelming amount of files (`r doa[doa$first == 'ripley',]$n`) out of all the files in the project (`r doa[doa$first == 'ripley',]$num_files`) that were deemed to be theirs. 
 
+```{r, echo=FALSE, warning=FALSE,message=FALSE}
 
-```{r,echo=FALSE, warning=FALSE,message=FALSE}
-
-files <- list.files("commit_files")
-meta  <- list.files("commit_metadata")
-
-f1    <- read_csv(paste0("commit_files/",files[2]))
-
-f1 %>%
-  select(hash,added.lines,file) %>%
-  rename(add = added.lines) -> f1new
-
-m1    <- read_csv(paste0("commit_metadata/",meta[2])) 
-m1 %>%
-  select(hash, author.name, author.timestamp) %>%
-  rename(author = author.name, time = author.timestamp) -> m1new
-
-reponame <- unlist(strsplit(files[1],"[.]"))[[1]]
-
-f1new %>%
-  left_join(m1new, by = "hash") -> joined
-
-
-files <- unique(github$file.path)
-file_auth <- github %>% group_by(file.path, author) %>% summarise(Freq=n())
-file_auth
-truck_factor <- file_auth %>% group_by(file.path) %>% summarise(Freq=n())
-truck_factor
-nrow(truck_factor[truck_factor$Freq == 1,]) / nrow(truck_factor)
+p<-ggplot(data=doa[doa$n > 20,], aes(x=first, y=n)) +geom_bar(stat="identity", fill="steelblue")+
+    geom_text(aes(label=n), vjust=-1, color="black", size=3)+  theme_minimal()  +
+  ggtitle("Number of Files owned by Committer")
+p
+ 
 ```
+
+
+
+
 
