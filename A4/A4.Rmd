@@ -1,5 +1,5 @@
 ---
-title: Assign 4 - Trucks
+title: Assignment 4 - Trucks
 author:
   - name: Troy Yang
     email: yang.tr@husky.neu.edu
@@ -82,7 +82,7 @@ R and R Studio were used to perform this analysis. Packages such as dplyr and re
 
 # Results
 
-For this project, the truck factor was found to be `r truck_factor`. As the follow visualization will show, 'ripley' had an overwhelming amount of files (`r doa[doa$first == 'ripley',]$n`) out of all the files in the project (`r doa[doa$first == 'ripley',]$num_files`) that were deemed to be theirs. 
+For this project, the truck factor was found to be `r truck_factor`. As the follow visualization will show, 'ripley' had an overwhelming amount of files (`r doa[doa$first == 'ripley',]$n`) out of all the files in the project (`r doa[doa$first == 'ripley',]$num_files`) that were deemed to be theirs. One committer owning such a large proportion of the code files in the repository explains why the truck factor was so low.
 
 ```{r, echo=FALSE, warning=FALSE,message=FALSE}
 
